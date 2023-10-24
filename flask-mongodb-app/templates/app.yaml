@@ -19,7 +19,7 @@ spec:
       - name: myregistrykey
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.flask.image.repository }}:{{ .Values.flask.image.tag }}"
+          image: "{{ .Values.flask.image.name }}:{{ .Values.flask.image.tag }}"
           imagePullPolicy: {{ .Values.flask.image.pullPolicy }}
           ports:
             - containerPort: 5000
