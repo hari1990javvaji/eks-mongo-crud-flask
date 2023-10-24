@@ -42,9 +42,8 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: "mongodb"
-
 imageCredentials:
   registry: hub.docker.com
-  username: docker_user_name
-  password: docker_password
+  username: hjavvaji
+  password: kishorehari
   email: hkishore42@gmail.com

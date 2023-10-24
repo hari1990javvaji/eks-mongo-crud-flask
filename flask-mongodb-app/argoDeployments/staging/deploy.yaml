@@ -3,10 +3,20 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: mongo
+  name: mongodb
   namespace: dbtest
 secrets:
-- name: mongo
+- name: mongodb
+---
+# Source: flask-mongodb-app/templates/pull-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dockerregistrykey
+  namespace: dbtest
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJodWIuZG9ja2VyLmNvbSI6eyJ1c2VybmFtZSI6ImhqYXZ2YWppIiwicGFzc3dvcmQiOiJraXNob3JlaGFyaSIsImVtYWlsIjoiaGtpc2hvcmU0MkBnbWFpbC5jb20iLCJhdXRoIjoiYUdwaGRuWmhhbWs2YTJsemFHOXlaV2hoY21rPSJ9fX0=
 ---
 # Source: flask-mongodb-app/templates/secret.yaml
 apiVersion: v1
@@ -23,6 +33,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mongodb-headless
+  namespace: dbtest
   labels:
     app: mongodb
 spec:
@@ -72,9 +83,11 @@ spec:
       labels:
         app: flask-mongodb-app
     spec:
+      imagePullSecrets:
+      - name: myregistrykey
       containers:
         - name: flask-mongodb-app
-          image: "hjavvaji/flask-mongo-python:22"
+          image: "hjavvaji/flask-mongo-python:28"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
@@ -84,7 +97,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: MONGO_SERVICE_NAME
-              value: mongo-headless
+              value: mongodb-headless
             - name: MONGODB_HOSTNAME
               value: "mongodb-0.$(MONGO_SERVICE_NAME).$(FLASK_NAMESPACE).svc.cluster.local"
             - name: MONGODB_USERNAME
@@ -111,6 +124,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongodb
+  namespace: dbtest
   labels:
     app: mongodb
 spec:
@@ -124,6 +138,7 @@ spec:
       labels:
         app: mongodb
     spec:
+      serviceAccountName: mongodb
       containers:
         - name: flask-mongodb-app-mongodb
           image: "mongo:4.0.17"
