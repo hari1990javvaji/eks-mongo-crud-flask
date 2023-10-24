@@ -70,6 +70,10 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: yq eval '.flask.image.tag = "${{ github.run_number }}"' -i ./flask-mongodb-app/values.yaml
+      - name: Mongo root password
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval '.mongodb.secret.mongorootpassword = "${{ secrets.MONGO_ROOT_PASSWORD }}"' -i ./flask-mongodb-app/values.yaml
       - name: Generate manifest files
         uses: WyriHaximus/github-action-helm3@v3
         with:
