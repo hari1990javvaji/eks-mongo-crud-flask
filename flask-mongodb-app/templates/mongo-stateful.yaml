@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  serviceName: mongodb-headless
+  replicas: {{ .Values.mongodb.replicaCount }}
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-mongodb
+          image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
+          imagePullPolicy: {{ .Values.mongodb.image.pullPolicy }}
+          env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: {{ .Values.mongodb.env.mongo_username }}
+          - name: MONGO_INITDB_DATABASE
+            value: {{ .Values.mongodb.env.mongo_database }}
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongodb
+                key: mongodb-root-password
+          securityContext:
+            allowPrivilegeEscalation: false
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: {{ .Values.mongodb.persistence.name }}
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Values.mongodb.persistence.name }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.mongodb.persistence.size }}

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "flask-mongodb-app.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "flask-mongodb-app.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.flask.service.type }}
+  ports:
+    - port: {{ .Values.flask.service.port }}
+      targetPort: {{ .Values.flask.service.port }}
+  selector:
+    {{- include "flask-mongodb-app.selectorLabels" . | nindent 4 }}

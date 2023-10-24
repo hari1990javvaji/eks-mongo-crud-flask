@@ -1,0 +1,76 @@
+---
+# Source: flask-mongodb-app/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: crud-flask-mongodb-app
+  labels:
+    helm.sh/chart: flask-mongodb-app-0.1.0
+    app.kubernetes.io/name: flask-mongodb-app
+    app.kubernetes.io/instance: crud
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: flask-mongodb-app
+    app.kubernetes.io/instance: crud
+
+---
+# Source: flask-mongodb-app/templates/app.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crud-flask-mongodb-app-flask
+  namespace: dbtest
+  labels:
+    app: flask-mongodb-app-flask
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-mongodb-app-flask
+  template:
+    metadata:
+      labels:
+        app: flask-mongodb-app-flask
+        namespace: 
+    spec:
+      containers:
+        - name: flask-mongodb-app-flask
+          image: "hjavvaji/flask-mongo-python:v1"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MY_POD_NAMESPACE
+                valueFrom:
+                    fieldRef:
+                    fieldPath: metadata.namespace
+            - name: K8S_SERVICE_NAME
+                value: "mongodb-headless"
+            - name: MONGODB_HOSTNAME
+                value: "mongodbflask-0.$(K8S_SERVICE_NAME).$(MY_POD_NAMESPACE).svc.cluster.local"
+            - name: MONGODB_USERNAME
+                value: "mongodbuser"
+            - name: MONGODB_DATABASE
+                value: "philips"
+            - name: MONGODB_PASSWORD
+                valueFrom:
+                    secretKeyRef:
+                    name: mongodb
+                    key: mongodb-root-password
+          resources:
+            requests:
+                cpu: 100m
+                memory: 100Mi
+            limits:
+                memory: "128Mi"
+                cpu: "500m"
+          securityContext:
+          allowPrivilegeEscalation: false
