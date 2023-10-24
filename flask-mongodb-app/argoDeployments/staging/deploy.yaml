@@ -1,96 +1,155 @@
 ---
-# Source: flask-dynamodb-app/templates/service.yaml
+# Source: flask-mongodb-app/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mongo
+  namespace: default
+secrets:
+- name: mongo
+---
+# Source: flask-mongodb-app/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: mongodb
+  namespace: default
+data:
+    mongodb-root-password: bW9uZ29kYjEyMw==
+---
+# Source: flask-mongodb-app/templates/mongo-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: staging-release-flask-dynamodb-app
+  name: mongodb-headless
   labels:
-    helm.sh/chart: flask-dynamodb-app-0.1.0
-    app.kubernetes.io/name: flask-dynamodb-app
-    app.kubernetes.io/instance: staging-release
-    app.kubernetes.io/version: "aebffe68ec6ec3fe7f7e4566793753d7e2a9a7eb"
+    app: mongodb
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+  clusterIP: None
+  selector:
+    app: mongodb
+---
+# Source: flask-mongodb-app/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: stag-crud-flask-mongodb-app
+  namespace: default
+  labels:
+    helm.sh/chart: flask-mongodb-app-0.1.0
+    app.kubernetes.io/name: flask-mongodb-app
+    app.kubernetes.io/instance: stag-crud
+    app.kubernetes.io/version: "1.16.0"
     app.kubernetes.io/managed-by: Helm
 spec:
-  selector:
-    app.kubernetes.io/name: flask-dynamodb-app
-    app.kubernetes.io/instance: staging-release
+  type: ClusterIP
   ports:
-    - protocol: TCP
-      port: 8082
+    - port: 5000
       targetPort: 5000
+  selector:
+    app.kubernetes.io/name: flask-mongodb-app
+    app.kubernetes.io/instance: stag-crud
 ---
-# Source: flask-dynamodb-app/templates/deploy.yaml
+# Source: flask-mongodb-app/templates/app.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: staging-release-flask-dynamodb-app
+  name: stag-crud-flask-mongodb-app
+  namespace: default
   labels:
-    helm.sh/chart: flask-dynamodb-app-0.1.0
-    app.kubernetes.io/name: flask-dynamodb-app
-    app.kubernetes.io/instance: staging-release
-    app.kubernetes.io/version: "aebffe68ec6ec3fe7f7e4566793753d7e2a9a7eb"
-    app.kubernetes.io/managed-by: Helm
+    app: flask-mongodb-app
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: flask-dynamodb-app
-      app.kubernetes.io/instance: staging-release
+      app: flask-mongodb-app
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: flask-dynamodb-app
-        app.kubernetes.io/instance: staging-release
+        app: flask-mongodb-app
     spec:
       containers:
-      - name: flask-dynamodb-app
-        image: githubcitests/flask-demo:aebffe68ec6ec3fe7f7e4566793753d7e2a9a7eb
-        envFrom:
-          - secretRef:
-              name: dynamodb-connection-details
-        startupProbe:
-          httpGet:
-            path: /health
-            port: 5000
-          failureThreshold: 30
-          periodSeconds: 10
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                - amd64
-                - arm64
+        - name: flask-mongodb-app
+          image: "hjavvaji/flask-mongo-python:20"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MONGO_SERVICE_NAME
+              value: mongo-headless
+            - name: MONGODB_HOSTNAME
+              value: "mongodb-0.$(MONGO_SERVICE_NAME).$(FLASK_NAMESPACE).svc.cluster.local"
+            - name: MONGODB_USERNAME
+              value: mongodbuser
+            - name: MONGODB_DATABASE
+              value: philips
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb
+                  key: mongodb-root-password
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false
 ---
-# Source: flask-dynamodb-app/templates/dynamodb-claim.yaml
-apiVersion: platform.hsdp.io/v1alpha1
-kind: DynamoDBTable
+# Source: flask-mongodb-app/templates/mongo-stateful.yaml
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
-  name: table-provisioned-composite-key
-  namespace: default
+  name: mongodb
   labels:
-    helm.sh/chart: flask-dynamodb-app-0.1.0
-    app.kubernetes.io/name: flask-dynamodb-app
-    app.kubernetes.io/instance: staging-release
-    app.kubernetes.io/version: "aebffe68ec6ec3fe7f7e4566793753d7e2a9a7eb"
-    app.kubernetes.io/managed-by: Helm
+    app: mongodb
 spec:
-  resourceConfig:
-    deletionPolicy: Delete
-    external-name: table-provisioned-composite-key
-    region: us-east-1
-  tableSetting:
-    hashKey: name
-    hashKeyType: S
-    rangeKey: type
-    rangeKeyType: S
-    readCapacity:  5
-    writeCapacity:  5
-  restoreSetting:
-    pointInTimeRecovery:
-      enabled: true
-  writeConnectionSecretToRef:
-    name: dynamodb-connection-details
+  serviceName: mongodb-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: flask-mongodb-app-mongodb
+          image: "mongo:4.0.17"
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: mongodbuser
+          - name: MONGO_INITDB_DATABASE
+            value: philips
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongodb
+                key: mongodb-root-password
+          securityContext:
+            allowPrivilegeEscalation: false
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongoflask
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: mongoflask
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
