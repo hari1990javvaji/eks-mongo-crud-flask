@@ -3,7 +3,7 @@ flask:
   replicaCount: 1
   image:
     repository: hjavvaji/flask-mongo-python
-    tag: "22"
+    tag: "24"
     pullPolicy: IfNotPresent
     name: hjavvaji/flask-mongo-crud
   service:
