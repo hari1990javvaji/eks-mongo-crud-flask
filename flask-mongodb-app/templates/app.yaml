@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flask-mongodb-app.fullname" . }}
+  namespace: {{.Release.Namespace}}
+  labels:
+    app: {{ include "flask-mongodb-app.name" . }}
+spec:
+  replicas: {{ .Values.flask.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "flask-mongodb-app.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "flask-mongodb-app.name" . }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.flask.image.repository }}:{{ .Values.flask.image.tag }}"
+          imagePullPolicy: {{ .Values.flask.image.pullPolicy }}
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MONGO_SERVICE_NAME
+              value: {{ .Values.mongodb.env.mongo_service_name }}
+            - name: MONGODB_HOSTNAME
+              value: "mongodb-0.$(MONGO_SERVICE_NAME).$(FLASK_NAMESPACE).svc.cluster.local"
+            - name: MONGODB_USERNAME
+              value: {{ .Values.mongodb.env.mongo_username }}
+            - name: MONGODB_DATABASE
+              value: {{ .Values.mongodb.env.mongo_database }}
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb
+                  key: mongodb-root-password
+          resources:
+{{ toYaml .Values.flask.resources | indent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false

@@ -1,0 +1,82 @@
+---
+# Source: flask-mongodb-app/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mongo
+  namespace: dbtest
+secrets:
+- name: mongo
+---
+# Source: flask-mongodb-app/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: crud-flask-mongodb-app
+  namespace: dbtest
+  labels:
+    helm.sh/chart: flask-mongodb-app-0.1.0
+    app.kubernetes.io/name: flask-mongodb-app
+    app.kubernetes.io/instance: crud
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    app.kubernetes.io/name: flask-mongodb-app
+    app.kubernetes.io/instance: crud
+---
+# Source: flask-mongodb-app/templates/app.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crud-flask-mongodb-app
+  namespace: dbtest
+  labels:
+    app: flask-mongodb-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-mongodb-app
+  template:
+    metadata:
+      labels:
+        app: flask-mongodb-app
+    spec:
+      containers:
+        - name: flask-mongodb-app
+          image: "hjavvaji/flask-mongo-python:v1"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MONGO_SERVICE_NAME
+              value: mongo-headless
+            - name: MONGODB_HOSTNAME
+              value: "mongodb-0.$(MONGO_SERVICE_NAME).$(FLASK_NAMESPACE).svc.cluster.local"
+            - name: MONGODB_USERNAME
+              value: mongodbuser
+            - name: MONGODB_DATABASE
+              value: philips
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb
+                  key: mongodb-root-password
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          securityContext:
+            allowPrivilegeEscalation: false

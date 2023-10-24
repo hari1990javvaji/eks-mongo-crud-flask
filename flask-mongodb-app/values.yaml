@@ -1,0 +1,46 @@
+# Default values for flask-mongodb-app.
+flask:
+  replicaCount: 1
+  image:
+    repository:  hjavvaji/flask-mongo-python
+    tag: v1
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: "500m"
+      memory: "128Mi"
+
+
+mongodb:
+  replicaCount: 1
+  image:
+    repository: mongo
+    tag: 4.0.17
+    pullPolicy: IfNotPresent
+  env:
+    mongo_username: "mongodbuser"
+    mongo_database: "philips"
+    mongo_service_name: "mongo-headless"
+  secret:
+    mongorootpassword: "DUMMY"  
+  service:
+    port: 27017
+  persistence:
+    name: mongoflask
+    enabled: true
+    size: 1Gi
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "mongo"
