@@ -66,6 +66,14 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: yq eval '.flask.image.name = "${{secrets.DOCKERHUB_USERNAME}}/flask-mongo-crud"' -i ./flask-mongodb-app/values.yaml
+      - name: Docker username creds update
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval '.imageCredentials.username = "${{secrets.DOCKERHUB_USERNAME}}"' -i ./flask-mongodb-app/values.yaml
+      - name: Docker password creds update
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval '.imageCredentials.password = "${{secrets.DOCKERHUB_TOKEN}}"' -i ./flask-mongodb-app/values.yaml
       - name: Image Tag update
         uses: mikefarah/yq@master
         with:
