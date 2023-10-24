@@ -1,0 +1,96 @@
+---
+# Source: flask-dynamodb-app/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: staging-release-flask-dynamodb-app
+  labels:
+    helm.sh/chart: flask-dynamodb-app-0.1.0
+    app.kubernetes.io/name: flask-dynamodb-app
+    app.kubernetes.io/instance: staging-release
+    app.kubernetes.io/version: "aebffe68ec6ec3fe7f7e4566793753d7e2a9a7eb"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    app.kubernetes.io/name: flask-dynamodb-app
+    app.kubernetes.io/instance: staging-release
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 5000
+---
+# Source: flask-dynamodb-app/templates/deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: staging-release-flask-dynamodb-app
+  labels:
+    helm.sh/chart: flask-dynamodb-app-0.1.0
+    app.kubernetes.io/name: flask-dynamodb-app
+    app.kubernetes.io/instance: staging-release
+    app.kubernetes.io/version: "aebffe68ec6ec3fe7f7e4566793753d7e2a9a7eb"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flask-dynamodb-app
+      app.kubernetes.io/instance: staging-release
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flask-dynamodb-app
+        app.kubernetes.io/instance: staging-release
+    spec:
+      containers:
+      - name: flask-dynamodb-app
+        image: githubcitests/flask-demo:aebffe68ec6ec3fe7f7e4566793753d7e2a9a7eb
+        envFrom:
+          - secretRef:
+              name: dynamodb-connection-details
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          failureThreshold: 30
+          periodSeconds: 10
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - arm64
+---
+# Source: flask-dynamodb-app/templates/dynamodb-claim.yaml
+apiVersion: platform.hsdp.io/v1alpha1
+kind: DynamoDBTable
+metadata:
+  name: table-provisioned-composite-key
+  namespace: default
+  labels:
+    helm.sh/chart: flask-dynamodb-app-0.1.0
+    app.kubernetes.io/name: flask-dynamodb-app
+    app.kubernetes.io/instance: staging-release
+    app.kubernetes.io/version: "aebffe68ec6ec3fe7f7e4566793753d7e2a9a7eb"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  resourceConfig:
+    deletionPolicy: Delete
+    external-name: table-provisioned-composite-key
+    region: us-east-1
+  tableSetting:
+    hashKey: name
+    hashKeyType: S
+    rangeKey: type
+    rangeKeyType: S
+    readCapacity:  5
+    writeCapacity:  5
+  restoreSetting:
+    pointInTimeRecovery:
+      enabled: true
+  writeConnectionSecretToRef:
+    name: dynamodb-connection-details

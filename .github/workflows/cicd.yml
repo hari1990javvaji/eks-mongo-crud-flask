@@ -51,4 +51,30 @@ jobs:
           push: true
           tags: ${{secrets.DOCKERHUB_USERNAME}}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
-    
+   
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: image-build-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository_owner == 'hari1990javvaji'
+    name: Deploy-to-staging
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Image Name update
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval '.flask.image.name = "${{secrets.DOCKERHUB_USERNAME}}/flask-mongo-crud"' -i ./flask-mongodb-app/values.yaml
+      - name: Image Tag update
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq eval '.flask.image.tag = "${{ github.run_number }}"' -i ./flask-mongodb-app/values.yaml
+      - name: Generate manifest files
+        uses: WyriHaximus/github-action-helm3@v3
+        with:
+          exec: helm template stag-crud ./flask-mongodb-app > ./argodeployments/staging/deploy.yaml
+      - name:  Apply image name changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Apply image name changes
