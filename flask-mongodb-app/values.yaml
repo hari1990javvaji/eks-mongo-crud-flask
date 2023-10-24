@@ -26,7 +26,7 @@ mongodb:
   env:
     mongo_username: "mongodbuser"
     mongo_database: "philips"
-    mongo_service_name: "mongo-headless"
+    mongo_service_name: "mongodb-headless"
   secret:
     mongorootpassword: "DUMMY"  
   service:
@@ -43,4 +43,4 @@ serviceAccount:
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: "mongo"
+  name: "mongodb"
