@@ -64,6 +64,7 @@ spec:
   selector:
     app.kubernetes.io/name: flask-mongodb-app
     app.kubernetes.io/instance: crud
+    app: flask-mongodb-app
 ---
 # Source: flask-mongodb-app/templates/app.yaml
 apiVersion: apps/v1
@@ -87,7 +88,7 @@ spec:
       - name: myregistrykey
       containers:
         - name: flask-mongodb-app
-          image: "hjavvaji/flask-mongo-crud:28"
+          image: "hjavvaji/flask-mongo-crud:32"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
