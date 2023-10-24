@@ -38,6 +38,8 @@ spec:
           volumeMounts:
             - name: {{ .Values.mongodb.persistence.name }}
               mountPath: /data/db
+          resources:
+{{ toYaml .Values.flask.resources | indent 12 }}
   volumeClaimTemplates:
     - metadata:
         name: {{ .Values.mongodb.persistence.name }}

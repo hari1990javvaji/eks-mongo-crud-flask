@@ -87,7 +87,7 @@ spec:
       - name: myregistrykey
       containers:
         - name: flask-mongodb-app
-          image: "hjavvaji/flask-mongo-crud:30"
+          image: "hjavvaji/flask-mongo-crud:28"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
@@ -160,6 +160,13 @@ spec:
           volumeMounts:
             - name: mongoflask
               mountPath: /data/db
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
   volumeClaimTemplates:
     - metadata:
         name: mongoflask

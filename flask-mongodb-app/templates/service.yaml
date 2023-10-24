@@ -12,3 +12,4 @@ spec:
       targetPort: {{ .Values.flask.service.port }}
   selector:
     {{- include "flask-mongodb-app.selectorLabels" . | nindent 4 }}
+    app: {{ include "flask-mongodb-app.name" . }}
