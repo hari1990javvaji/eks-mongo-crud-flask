@@ -85,7 +85,7 @@ jobs:
       - name: Generate manifest files
         uses: WyriHaximus/github-action-helm3@v3
         with:
-          exec: helm template crud ./flask-mongodb-app --namespace=dbtest --create-namespace --debug=true > ./flask-mongodb-app/argoDeployments/staging/deploy.yaml
+          exec: helm template crud ./flask-mongodb-app --namespace=systeamcheck --create-namespace --debug=true > ./flask-mongodb-app/argoDeployments/staging/deploy.yaml
       - name:  Apply image name changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
