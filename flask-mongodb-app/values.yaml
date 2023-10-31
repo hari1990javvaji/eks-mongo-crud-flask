@@ -24,7 +24,7 @@ mongodb:
     pullPolicy: IfNotPresent
   env:
     mongo_username: "mongodbuser"
-    mongo_database: "philips"
+    mongo_database: "systeam"
     mongo_service_name: "mongodb-headless"
   secret:
     mongorootpassword: "mongodb123"
