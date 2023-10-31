@@ -88,7 +88,7 @@ spec:
       - name: myregistrykey
       containers:
         - name: flask-mongodb-app
-          image: "hjavvaji/flask-mongo-crud:32"
+          image: "hjavvaji/flask-mongo-crud:34"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
@@ -104,7 +104,7 @@ spec:
             - name: MONGODB_USERNAME
               value: mongodbuser
             - name: MONGODB_DATABASE
-              value: philips
+              value: systeam
             - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -148,7 +148,7 @@ spec:
           - name: MONGO_INITDB_ROOT_USERNAME
             value: mongodbuser
           - name: MONGO_INITDB_DATABASE
-            value: philips
+            value: systeam
           - name: MONGO_INITDB_ROOT_PASSWORD
             valueFrom:
               secretKeyRef:
