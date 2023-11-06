@@ -89,4 +89,22 @@ jobs:
       - name:  Apply image name changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: Apply image name changes
+          commit_message: Apply image name changes for version ${{ github.run_number }}
+ 
+  notify_status:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+    - name: Check Argo CD sync status
+      run: |
+        # Insert your script here to check the sync status from Argo CD
+        # For example, you can use the Argo CD API to retrieve sync status
+        # Replace the following line with your command
+        echo "Checking sync status from Argo CD"
+        ARGOCD_SERVER="https://argocd.us-east-1-st-next.1e4bd3e413ba6146.hsp.philips.com"
+        ARGOCD_APP_NAME="eks-crud-mongo-flask"
+        ARGO_LOGIN_USERNAME=${{secrets.ARGO_LOGIN_USERNAME}}
+        ARGO_LOGIN_PASSWORD=${{secrets.ARGO_LOGIN_PASSWORD}}
+        token=$(curl -sk -L -X POST ${ARGOCD_SERVER}/api/v1/session  -d $'{"username":"'$ARGO_LOGIN_USERNAME'","password": "'$ARGO_LOGIN_PASSWORD'"}'|jq -r .token)
+        SYNC_STATUS=$(curl -s -v -k -L -H "Authorization: Bearer $token" "${ARGOCD_SERVER}/api/v1/applications/${ARGOCD_APP_NAME}"| jq -r '.status.sync.status')                                        
+        echo "Sync status of $ARGOCD_APP_NAME: $SYNC_STATUS"
