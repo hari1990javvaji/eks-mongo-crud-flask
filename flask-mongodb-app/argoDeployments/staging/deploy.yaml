@@ -88,7 +88,7 @@ spec:
       - name: myregistrykey
       containers:
         - name: flask-mongodb-app
-          image: "hjavvaji/flask-mongo-crud:36"
+          image: "hjavvaji/flask-mongo-crud:37"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
