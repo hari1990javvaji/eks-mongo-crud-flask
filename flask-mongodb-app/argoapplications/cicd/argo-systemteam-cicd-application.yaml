@@ -1,0 +1,13 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: eks-flask-mongo-flask
+spec:
+  destination:
+    namespace: systemcheck
+    server: 'https://kubernetes.default.svc'
+  source:
+    repoURL: 'https://github.com/hari1990javvaji/eks-mongo-crud-flask.git' 
+    path: 'flask-mongodb-app/argoDeployments/staging'
+    targetRevision: 'HEAD'
+  project: default
